@@ -1,5 +1,6 @@
 import twilio from "twilio";
 import Hospital from "../models/Hospital.js";
+import sentinelService from "../services/sentinelService.js";
 
 export const sendRxNotification = async (req, res) => {
   try {
@@ -8,6 +9,19 @@ export const sendRxNotification = async (req, res) => {
     const hospital = await Hospital.findById(hospitalId);
     if (!hospital || !hospital.isEnabled) {
       return res.status(400).json({ message: "Service not enabled for this hospital." });
+    }
+
+    // 🔒 Sentinel: Evaluate WhatsApp message sending
+    const evaluation = await sentinelService.evaluateWhatsAppMessage({
+      doctorId: req.user?.id || "unknown",
+      recipientCount: 1,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1"
+    });
+
+    if (evaluation.action === "block" || evaluation.action === "TERMINATE_SESSION") {
+      return res.status(403).json({
+        message: "Access Denied: Suspected spam or notification abuse blocked by Sentinel."
+      });
     }
 
     const client = twilio(hospital.twilioSid, hospital.twilioToken);

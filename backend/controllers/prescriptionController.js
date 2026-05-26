@@ -3,6 +3,8 @@ import Patient from "../models/Patient.js";
 import User from "../models/User.js";
 import Hospital from "../models/Hospital.js";
 import { generatePrescriptionPDF } from "../utils/generatePDF.js";
+import sentinelService from "../services/sentinelService.js";
+
 // Generate Prescription ID
 const generatePrescriptionId = async (hospitalCode) => {
   const count = await Prescription.countDocuments();
@@ -18,10 +20,28 @@ export const createPrescription = async (req, res) => {
 
     const patient = await Patient.findById(patientId);
     const doctor = await User.findById(req.user.id);
-    const hospital = await Hospital.findById(patient.hospitalId);
+    const hospital = await Hospital.findById(patient?.hospitalId);
 
     if (!patient || !doctor || !hospital) {
       return res.status(404).json({ message: "Data missing" });
+    }
+
+    // 🔒 Sentinel: Evaluate doctor sending prescription behavior
+    const prescriptionCount = await Prescription.countDocuments({ doctorId: doctor._id });
+    const evaluation = await sentinelService.evaluateSendPrescription({
+      doctorId: doctor._id,
+      sessionId: req.headers.authorization?.split(" ")[1] || "unknown",
+      patientId: patient._id,
+      prescriptionCount: prescriptionCount + 1,
+      medicinesCount: medicines ? medicines.length : 0,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+      userAgent: req.headers["user-agent"] || "unknown"
+    });
+
+    if (evaluation.action === "block" || evaluation.action === "TERMINATE_SESSION") {
+      return res.status(403).json({
+        message: "Access Denied: Highly anomalous prescription activity blocked by Sentinel."
+      });
     }
 
     // Generate Prescription ID

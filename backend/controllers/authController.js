@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Hospital from "../models/Hospital.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import sentinelService from "../services/sentinelService.js";
 
 /**
  * LOGIN: Authenticates users and checks for account/hospital status
@@ -20,7 +21,44 @@ export const login = async (req, res) => {
     // 2. Validate Password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      // 🚨 Sentinel: Track failed login attempt
+      try {
+        await sentinelService.evaluateFailedLogin({
+          userId: user._id,
+          failedAttempts: 1,
+          ipAddress: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1"
+        });
+      } catch (err) {
+        console.error("Sentinel failed login tracking error:", err.message);
+      }
+
       return res.status(400).json({ message: "Invalid credentials (wrong password)" });
+    }
+
+    // 🔒 Sentinel: Evaluate successful login behavior before proceeding
+    let behavioralData = {};
+    const telemetryHeader = req.headers["x-sentinel-telemetry"];
+    if (telemetryHeader) {
+      try {
+        behavioralData = JSON.parse(telemetryHeader);
+      } catch (e) {
+        console.warn("Failed to parse telemetry header on login");
+      }
+    }
+
+    const evaluation = await sentinelService.evaluateLogin({
+      userId: user._id,
+      role: user.role,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+      userAgent: req.headers["user-agent"] || "unknown",
+      behavioralData,
+      geoData: behavioralData?.geo
+    });
+
+    if (evaluation.action === "block" || evaluation.action === "TERMINATE_SESSION") {
+      return res.status(403).json({
+        message: "Access Denied: Suspicious login activity blocked by security monitoring."
+      });
     }
 
     // 3. Safety & Status Checks 

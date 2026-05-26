@@ -103,6 +103,21 @@ export const uploadHospitalTemplate = async (req, res) => {
       return res.status(400).json({ message: "No template file uploaded." });
     }
 
+    // 🔒 Sentinel: Evaluate template file upload activity
+    const sentinelService = (await import("../services/sentinelService.js")).default;
+    const evaluation = await sentinelService.evaluateFileUpload({
+      userId: req.user.id,
+      fileSize: req.file.size,
+      fileType: req.file.mimetype,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1"
+    });
+
+    if (evaluation.action === "block" || evaluation.action === "TERMINATE_SESSION") {
+      return res.status(403).json({
+        message: "Access Denied: Malicious template upload attempt blocked by Sentinel."
+      });
+    }
+
     hospital.templateFile = req.file.path;
     await hospital.save();
 
@@ -128,6 +143,26 @@ export const updateTwilioSettings = async (req, res) => {
     const hospital = await Hospital.findOne({ hospitalAdminId: req.user.id });
     if (!hospital) {
       return res.status(404).json({ message: "Hospital record not found for this admin." });
+    }
+
+    // 🔒 Sentinel: Evaluate Twilio settings change
+    const sentinelService = (await import("../services/sentinelService.js")).default;
+    const evaluation = await sentinelService.evaluate({
+      user_id: req.user.id,
+      session_id: req.headers.authorization?.split(" ")[1] || "unknown",
+      action: {
+        type: "update_twilio_settings"
+      },
+      network: {
+        ip_address: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+        user_agent: req.headers["user-agent"] || "unknown"
+      }
+    });
+
+    if (evaluation.action === "block" || evaluation.action === "TERMINATE_SESSION") {
+      return res.status(403).json({
+        message: "Access Denied: Suspicious Twilio settings update blocked by Sentinel."
+      });
     }
 
     hospital.twilioSid = twilioSid || hospital.twilioSid;

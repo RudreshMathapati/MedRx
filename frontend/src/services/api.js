@@ -19,13 +19,18 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api"
 });
 
-// 🔐 Attach token automatically
+// 🔐 Attach token and behavioral telemetry automatically
 API.interceptors.request.use(
   (req) => {
     const token = localStorage.getItem("token");
 
     if (token) {
       req.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Attach active telemetry bundle if tracker is loaded
+    if (window.sentinelTracker) {
+      req.headers["X-Sentinel-Telemetry"] = JSON.stringify(window.sentinelTracker.getTelemetry());
     }
 
     return req;
