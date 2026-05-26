@@ -3,8 +3,10 @@ import express from "express";
 import { 
   createHospital, 
   getHospitals, 
-  uploadHospitalTemplate 
-} from "../controllers/hospitalController.js"; // Ensure these 3 are exported in controller
+  uploadHospitalTemplate,
+  updateTwilioSettings,
+  getMyHospital
+} from "../controllers/hospitalController.js";
 import { 
   verifyToken, 
   isSuperAdmin, 
@@ -31,5 +33,9 @@ router.get("/test-admin", verifyToken, isHospitalAdmin, (req, res) => {
 // 3. SuperAdmin Routes (Hospital Management)
 router.post("/create", verifyToken, isSuperAdmin, createHospital);
 router.get("/all", verifyToken, isSuperAdmin, getHospitals);
+
+// 4. Hospital Admin: Twilio Settings
+router.get("/my-hospital", verifyToken, isHospitalAdmin, getMyHospital);
+router.put("/twilio-settings", verifyToken, isHospitalAdmin, updateTwilioSettings);
 
 export default router;

@@ -13,12 +13,16 @@ import {
   FaSearch,
   FaArrowRight,
 } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { sendHospitalApprovalEmail } from "../../utils/emailjsConfig";
 
 const SuperAdminDashboard = () => {
   const [stats, setStats] = useState({});
   const [hospitals, setHospitals] = useState([]);
   const [archivedHospitals, setArchivedHospitals] = useState([]);
   const [doctorRequests, setDoctorRequests] = useState([]);
+  const [pendingHospitalRequests, setPendingHospitalRequests] = useState([]);
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");
 const navigate = useNavigate(); // Initialize the hook
@@ -28,18 +32,20 @@ const navigate = useNavigate(); // Initialize the hook
 
   const fetchData = async () => {
     try {
-      const [statsRes, hospitalsRes, archivedRes, requestsRes] =
+      const [statsRes, hospitalsRes, archivedRes, requestsRes, hospitalRequestsRes] =
         await Promise.all([
           API.get("/superadmin/stats"),
           API.get("/superadmin/hospitals"),
           API.get("/superadmin/archived-hospitals"),
           API.get("/doctor-requests/all"),
+          API.get("/hospital-requests"),
         ]);
 
       setStats(statsRes.data);
       setHospitals(hospitalsRes.data);
       setArchivedHospitals(archivedRes.data);
       setDoctorRequests(requestsRes.data);
+      setPendingHospitalRequests(hospitalRequestsRes.data || []);
     } catch (error) {
       console.error("Error fetching dashboard data", error);
     }
@@ -57,9 +63,47 @@ const navigate = useNavigate(); // Initialize the hook
     fetchData();
   };
 
+  const handleApproveHospitalRequest = async (request) => {
+    try {
+      const response = await API.put(`/hospital-requests/${request._id}/approve`);
+      if (response.data.success) {
+        const { hospitalCode, adminEmail, adminName, hospitalName } = response.data.data;
+        
+        // Dispatch EmailJS
+        await sendHospitalApprovalEmail(adminEmail, adminName, hospitalName, hospitalCode);
+        
+        toast.success(`Request approved! Code ${hospitalCode} sent to ${adminEmail}`);
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to approve request.");
+      console.error(error);
+    }
+  };
+
+  const handleRejectHospitalRequest = async (id) => {
+    if (!window.confirm("Reject this hospital request?")) return;
+    try {
+      const response = await API.put(`/hospital-requests/${id}/reject`);
+      if (response.data.success) {
+        toast.success("Hospital request rejected successfully.");
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reject request.");
+      console.error(error);
+    }
+  };
+
   const filteredHospitals = (
     tab === "active" ? hospitals : archivedHospitals
   ).filter((h) => h.name.toLowerCase().includes(search.toLowerCase()));
+
+  const filteredRequests = pendingHospitalRequests.filter((req) =>
+    req.name.toLowerCase().includes(search.toLowerCase()) ||
+    req.adminName.toLowerCase().includes(search.toLowerCase()) ||
+    req.adminEmail.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <DashboardLayout>
@@ -118,6 +162,7 @@ const navigate = useNavigate(); // Initialize the hook
         />
       </div>
 
+      <ToastContainer position="top-right" theme="colored" />
       {/* TABS CONTAINER */}
       <div className="bg-white p-1.5 inline-flex gap-2 rounded-2xl border border-gray-100 shadow-sm mb-6">
         <Tab active={tab === "active"} onClick={() => setTab("active")}>
@@ -126,6 +171,9 @@ const navigate = useNavigate(); // Initialize the hook
         <Tab active={tab === "archived"} onClick={() => setTab("archived")}>
           Archived List
         </Tab>
+        <Tab active={tab === "requests"} onClick={() => setTab("requests")}>
+          Hospital Requests ({pendingHospitalRequests.length})
+        </Tab>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -133,21 +181,80 @@ const navigate = useNavigate(); // Initialize the hook
         <div className="xl:col-span-2">
           <Section
             title={
-              tab === "active" ? "Managed Hospitals" : "Archived Facilities"
+              tab === "active"
+                ? "Managed Hospitals"
+                : tab === "archived"
+                ? "Archived Facilities"
+                : "Hospital Registration Requests"
             }
           >
             <Table>
               <thead>
                 <tr className="bg-gray-50/50">
-                  <Th>Hospital Name</Th>
-                  <Th>Contact/Address</Th>
-                  <Th>Access Code</Th>
-                  <Th className="text-right">Action</Th>
+                  {tab === "requests" ? (
+                    <>
+                      <Th>Hospital Details</Th>
+                      <Th>Admin Info</Th>
+                      <Th>Contact Details</Th>
+                      <Th className="text-right">Action</Th>
+                    </>
+                  ) : (
+                    <>
+                      <Th>Hospital Name</Th>
+                      <Th>Contact/Address</Th>
+                      <Th>Access Code</Th>
+                      <Th className="text-right">Action</Th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 <AnimatePresence mode="wait">
-                  {filteredHospitals.length === 0 ? (
+                  {tab === "requests" ? (
+                    filteredRequests.length === 0 ? (
+                      <Empty message="No pending requests found" />
+                    ) : (
+                      filteredRequests.map((req) => (
+                        <motion.tr
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          key={req._id}
+                          className="group hover:bg-blue-50/35 transition-colors border-b border-gray-50 last:border-0"
+                        >
+                          <Td>
+                            <div className="font-bold text-gray-850">{req.name}</div>
+                            <div className="text-xs text-gray-400 truncate max-w-[180px]">{req.address}</div>
+                          </Td>
+                          <Td>
+                            <div className="font-semibold text-gray-700">{req.adminName}</div>
+                            <div className="text-xs text-gray-400">{req.adminEmail}</div>
+                          </Td>
+                          <Td>
+                            <div className="text-xs text-gray-550 font-semibold">{req.phone}</div>
+                            <div className="text-xs text-gray-400">{req.email}</div>
+                          </Td>
+                          <Td className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleApproveHospitalRequest(req)}
+                                className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-100 transition-all"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleRejectHospitalRequest(req._id)}
+                                className="px-3.5 py-1.5 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-100 transition-all"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </Td>
+                        </motion.tr>
+                      ))
+                    )
+                  ) : filteredHospitals.length === 0 ? (
                     <Empty message="No matching hospitals found" />
                   ) : (
                     filteredHospitals.map((h) => (

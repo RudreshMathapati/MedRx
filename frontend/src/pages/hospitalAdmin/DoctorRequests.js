@@ -202,6 +202,7 @@ import {
   FaUserMd, FaSearch, FaCheckCircle, FaInbox, 
   FaStethoscope, FaTimesCircle, FaEye, FaArrowLeft 
 } from "react-icons/fa";
+import { sendDoctorApprovalEmail } from "../../utils/emailjsConfig";
 
 const DoctorRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -232,10 +233,19 @@ const DoctorRequests = () => {
     
     try {
       setLoadingId(id);
-      // Calls the backend we updated earlier: marks request as approved + creates User record
-      await API.put(`/doctor-requests/hospital-approve/${id}`);
+      // Calls the backend we updated: marks request as approved + creates User record + returns password
+      const res = await API.put(`/doctor-requests/hospital-approve/${id}`);
       
-      toast.success("Doctor Approved! Credentials sent to their email.");
+      if (res.data && res.data.data) {
+        const { doctorName, email, password } = res.data.data;
+        
+        // Dispatch EmailJS
+        await sendDoctorApprovalEmail(email, doctorName, password);
+        toast.success(`Doctor Approved! Account password "${password}" emailed to ${email}`);
+      } else {
+        toast.success("Doctor Approved! Credentials sent to their email.");
+      }
+      
       setRequests(prev => prev.filter(req => req._id !== id));
       setSelectedRequest(null);
     } catch (err) {

@@ -22,7 +22,7 @@ const handleLogin = async () => {
 
   try {
     setLoading(true);
-    const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+    const res = await axios.post(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/login`, { email, password });
 
     // Ensure user object exists before saving
     if (res.data.user) {
@@ -144,16 +144,29 @@ const handleLogin = async () => {
             </div>
 
             {/* REGISTER FOOTER */}
-            <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-              <p className="text-slate-500 font-medium">
-                Are you a healthcare professional?
-              </p>
-              <a
-                href="/doctor-register"
-                className="inline-block mt-2 text-blue-600 font-bold hover:text-blue-700 hover:underline transition-all"
-              >
-                Register as a Doctor
-              </a>
+            <div className="mt-10 pt-8 border-t border-slate-100 text-center flex flex-col items-center gap-2">
+              <div>
+                <p className="text-slate-500 font-medium">
+                  Are you a healthcare professional?
+                </p>
+                <a
+                  href="/doctor-register"
+                  className="inline-block mt-1 text-blue-600 font-bold hover:text-blue-700 hover:underline transition-all"
+                >
+                  Register as a Doctor
+                </a>
+              </div>
+              <div className="mt-2 border-t border-gray-100 w-full pt-2">
+                <p className="text-slate-500 font-medium">
+                  Want to register your hospital with MedRx?
+                </p>
+                <a
+                  href="/hospital-register"
+                  className="inline-block mt-1 text-indigo-600 font-bold hover:text-indigo-700 hover:underline transition-all"
+                >
+                  Request Hospital Access
+                </a>
+              </div>
             </div>
           </div>
 

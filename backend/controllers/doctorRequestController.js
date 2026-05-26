@@ -72,8 +72,16 @@ export const hospitalAdminApprove = async (req, res) => {
     await request.save();
 
     // 2. Create the Doctor User Account
-    const defaultPassword = "doctor123"; 
-    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    const generatePassword = () => {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let pwd = "";
+      for (let i = 0; i < 8; i++) {
+        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pwd;
+    };
+    const randomPassword = generatePassword();
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
     const doctor = new User({
       name: request.name,
@@ -92,7 +100,14 @@ export const hospitalAdminApprove = async (req, res) => {
 
     await doctor.save();
 
-    res.json({ message: "Doctor approved and account created successfully" });
+    res.json({
+      message: "Doctor approved and account created successfully",
+      data: {
+        doctorName: doctor.name,
+        email: doctor.email,
+        password: randomPassword
+      }
+    });
   } catch (error) {
     console.error("HOSPITAL APPROVE ERROR:", error);
     res.status(500).json({ error: error.message });

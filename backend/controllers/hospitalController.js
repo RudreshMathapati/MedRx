@@ -116,3 +116,48 @@ export const uploadHospitalTemplate = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+/**
+ * UPDATE TWILIO SETTINGS:
+ * Allows a logged-in Hospital Admin to configure / update their Twilio credentials.
+ */
+export const updateTwilioSettings = async (req, res) => {
+  try {
+    const { twilioSid, twilioToken, whatsappNumber, smsNumber, isEnabled } = req.body;
+
+    const hospital = await Hospital.findOne({ hospitalAdminId: req.user.id });
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital record not found for this admin." });
+    }
+
+    hospital.twilioSid = twilioSid || hospital.twilioSid;
+    hospital.twilioToken = twilioToken || hospital.twilioToken;
+    hospital.whatsappNumber = whatsappNumber || hospital.whatsappNumber;
+    hospital.smsNumber = smsNumber || hospital.smsNumber;
+    hospital.isEnabled = isEnabled !== undefined ? isEnabled : hospital.isEnabled;
+
+    await hospital.save();
+
+    res.json({ success: true, message: "Twilio settings updated successfully." });
+  } catch (error) {
+    console.error("UPDATE_TWILIO_ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * GET MY HOSPITAL:
+ * Returns the hospital record for the currently logged-in Hospital Admin.
+ */
+export const getMyHospital = async (req, res) => {
+  try {
+    const hospital = await Hospital.findOne({ hospitalAdminId: req.user.id });
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found." });
+    }
+    res.json(hospital);
+  } catch (error) {
+    console.error("GET_MY_HOSPITAL_ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

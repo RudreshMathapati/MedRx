@@ -102,7 +102,8 @@ import {
   FaSignOutAlt,
   FaChartLine,
   FaClipboardList,
-  FaUserPlus
+  FaUserPlus,
+  FaWhatsapp
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
@@ -175,6 +176,7 @@ const Sidebar = () => {
               {menuItem("/create-receptionist", "Add Receptionist", <FaUserPlus />)}
               {menuItem("/patients-admin", "Patient Database", <FaUsers />)}
               {menuItem("/doctor-requests-admin", "Verify Doctors", <FaClipboardList />)}
+              {menuItem("/twilio-settings", "WhatsApp/SMS", <FaWhatsapp />)}
             </>
           )}
 

@@ -3,10 +3,6 @@ import Patient from "../models/Patient.js";
 import User from "../models/User.js";
 import Hospital from "../models/Hospital.js";
 import { generatePrescriptionPDF } from "../utils/generatePDF.js";
-import { sendWhatsApp } from "../utils/sendWhatsApp.js";
-import twilio from "twilio";
-
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 // Generate Prescription ID
 const generatePrescriptionId = async (hospitalCode) => {
   const count = await Prescription.countDocuments();
@@ -60,18 +56,6 @@ export const createPrescription = async (req, res) => {
     prescription.pdfUrl = pdfPath;
     await prescription.save();
 
-    const pdfLink = `http://localhost:5000/${pdfPath}`;
-
-    // Send WhatsApp
-    try {
-      await sendWhatsApp(patient.phone, `Your Prescription: ${pdfLink}`);
-      prescription.whatsappSent = true;
-    } catch (err) {
-      console.log("WhatsApp failed");
-    }
-
-    await prescription.save();
-
     // Update patient status
     await Patient.findByIdAndUpdate(patientId, {
       status: "completed",
@@ -100,31 +84,4 @@ export const getPrescriptionByPatient = async (req, res) => {
     console.log("PRESCRIPTION ERROR:", error);
     res.status(500).json({ error: error.message });
   }
-};
-export const sendPrescriptionNotification = async (req, res) => {
-  try {
-    const { patientPhone, patientName, prescriptionId, hospitalName } = req.body;
-
-    // The link to the viewable prescription PDF
-    const rxLink = `${process.env.FRONTEND_URL}/view-rx/${prescriptionId}`;
-
-    // 1. SEND SMS
-    await client.messages.create({
-      body: `Hello ${patientName}, your prescription from ${hospitalName} is ready. View it here: ${rxLink}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: patientPhone,
-    });
-
-    // 2. SEND WHATSAPP
-    await client.messages.create({
-      from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-      body: `*MedRx Digital Prescription*\n\nHello ${patientName},\nYour digital prescription from *${hospitalName}* has been generated.\n\n🔗 *View Rx:* ${rxLink}\n\nGet well soon!`,
-      to: `whatsapp:${patientPhone}`,
-    });
-
-    res.json({ success: true, message: "Notifications sent via SMS & WhatsApp" });
-  } catch (error) {
-    console.error("Notification Error:", error);
-    res.status(500).json({ message: "Failed to send notifications" });
-  }
-};
+};

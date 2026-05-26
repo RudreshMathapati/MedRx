@@ -35,6 +35,16 @@ export const addPatient = async (req, res) => {
 
     await patient.save();
 
+    // Emit event through socket.io
+    const io = req.app.get("io");
+    if (io && req.user.hospitalId) {
+      io.to(req.user.hospitalId.toString()).emit("QUEUE_UPDATED", {
+        hospitalId: req.user.hospitalId,
+        doctorId: doctorId
+      });
+      console.log(`Socket broadcast: QUEUE_UPDATED for hospital ${req.user.hospitalId}`);
+    }
+
     res.json({ message: "Patient added successfully" });
   } catch (error) {
     console.log("ADD PATIENT ERROR:", error);
@@ -95,6 +105,16 @@ export const markCompleted = async (req, res) => {
 
     patient.status = "completed";
     await patient.save();
+
+    // Emit event through socket.io
+    const io = req.app.get("io");
+    if (io && req.user.hospitalId) {
+      io.to(req.user.hospitalId.toString()).emit("QUEUE_UPDATED", {
+        hospitalId: req.user.hospitalId,
+        doctorId: patient.doctorId
+      });
+      console.log(`Socket broadcast: QUEUE_UPDATED (completed) for hospital ${req.user.hospitalId}`);
+    }
 
     res.json({ message: "Patient marked completed" });
 

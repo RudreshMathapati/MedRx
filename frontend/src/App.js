@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
 import DoctorRegister from "./pages/auth/DoctorRegister";
+import HospitalRegister from "./pages/auth/HospitalRegister";
 
 import SuperAdminDashboard from "./pages/superAdmin/Dashboard";
 import CreateHospital from "./pages/superAdmin/CreateHospital";
@@ -24,6 +25,7 @@ import AddPatient from "./pages/receptionist/AddPatient";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import PrivateRoute from "./utils/PrivateRoute";
 import UploadTemplate from "./pages/hospitalAdmin/UploadTemplate";
+import TwilioSettings from "./pages/hospitalAdmin/TwilioSettings";
 import LandingPage from "./pages/auth/LandingPage";
 import AboutPage from "./pages/auth/AboutPage";
 
@@ -45,6 +47,7 @@ function App() {
 
 
         <Route path="/doctor-register" element={<DoctorRegister />} />
+        <Route path="/hospital-register" element={<HospitalRegister />} />
 
         {/* Super Admin */}
         <Route
@@ -119,6 +122,14 @@ function App() {
           element={
             <ProtectedRoute role="hospital_admin">
               <DoctorRequestsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/twilio-settings"
+          element={
+            <ProtectedRoute role="hospital_admin">
+              <TwilioSettings />
             </ProtectedRoute>
           }
         />
