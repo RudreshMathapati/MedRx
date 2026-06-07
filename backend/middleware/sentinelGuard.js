@@ -1,0 +1,175 @@
+const sentinelGuard = (actionType) => {
+  return async (req, res, next) => {
+    try {
+      const telemetry =
+        req.body?.sentinelTelemetry || {};
+
+      const userId =
+        req.user?.id ||
+        req.user?._id ||
+        "anonymous";
+
+      const sessionId =
+        req.headers["x-session-id"] ||
+        userId;
+
+      const payload = {
+  user_id:
+    telemetry.user_id ||
+    String(userId),
+
+  session_id:
+    telemetry.session_id ||
+    String(sessionId),
+
+  action: {
+    type: actionType,
+  },
+
+  network: {
+    ip_address:
+      (req.headers["x-forwarded-for"] || "")
+        .split(",")[0]
+        .trim() ||
+      req.socket.remoteAddress,
+
+    user_agent:
+      telemetry.network?.user_agent ||
+      req.headers["user-agent"] ||
+      "unknown",
+  },
+
+  device:
+    telemetry.device || {},
+
+  behavioral:
+    telemetry.behavioral || {},
+};
+
+      console.log("\n==================================");
+      console.log("SENTINEL REQUEST START");
+      console.log("==================================");
+
+      console.log("[ACTION]", actionType);
+
+      console.log("[USER ID]", userId);
+
+      console.log("[SESSION ID]", sessionId);
+
+      console.log("[REQUEST URL]");
+      console.log(
+        "https://sentinel-layer-general.onrender.com/evaluate"
+      );
+
+      console.log("[REQUEST HEADERS]");
+      console.log({
+        "Content-Type": "application/json",
+        "X-Sentinel-Key":
+          "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+      });
+
+      console.log("[REQUEST PAYLOAD]");
+      console.log(
+        JSON.stringify(payload, null, 2)
+      );
+
+      const response = await fetch(
+        "https://sentinel-layer-general.onrender.com/evaluate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Sentinel-Key":
+              "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      console.log("\n==================================");
+      console.log("SENTINEL RESPONSE");
+      console.log("==================================");
+
+      console.log(
+        "[FINAL RESPONSE URL]",
+        response.url
+      );
+
+      console.log(
+        "[STATUS]",
+        response.status
+      );
+
+      console.log(
+        "[STATUS TEXT]",
+        response.statusText
+      );
+
+      console.log(
+        "[CONTENT TYPE]",
+        response.headers.get("content-type")
+      );
+
+      console.log(
+        "[SERVER HEADER]",
+        response.headers.get("server")
+      );
+
+      console.log(
+        "[DATE HEADER]",
+        response.headers.get("date")
+      );
+
+      const rawResponse =
+        await response.text();
+
+      console.log("\n[RAW RESPONSE]");
+      console.log(rawResponse);
+
+      try {
+        const data =
+          JSON.parse(rawResponse);
+
+        console.log(
+          "\n[PARSED RESPONSE]"
+        );
+
+        console.dir(data, {
+          depth: null,
+        });
+
+        req.sentinelResponse = data;
+      } catch (err) {
+        console.log(
+          "\n[JSON PARSE FAILED]"
+        );
+
+        console.log(
+          err.message
+        );
+      }
+
+      console.log(
+        "\n=================================="
+      );
+      console.log(
+        "SENTINEL REQUEST END"
+      );
+      console.log(
+        "==================================\n"
+      );
+
+      next();
+    } catch (err) {
+      console.error(
+        "\n[SENTINEL ERROR]"
+      );
+
+      console.error(err);
+
+      next();
+    }
+  };
+};
+
+export default sentinelGuard;
