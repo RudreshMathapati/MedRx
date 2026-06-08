@@ -1,445 +1,285 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import API from "../../services/api";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // Add this import
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   FaHospital,
   FaUserMd,
   FaUsers,
   FaFilePrescription,
-  FaTrash,
-  FaUndo,
-  FaSearch,
   FaArrowRight,
+  FaMapMarkerAlt,
+  FaPhone,
 } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+import {
+  HiOfficeBuilding,
+  HiDocumentText,
+  HiPlusCircle,
+  HiViewGrid,
+  HiUserGroup,
+} from "react-icons/hi";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { sendHospitalApprovalEmail } from "../../utils/emailjsConfig";
 
 const SuperAdminDashboard = () => {
   const [stats, setStats] = useState({});
   const [hospitals, setHospitals] = useState([]);
-  const [archivedHospitals, setArchivedHospitals] = useState([]);
-  const [doctorRequests, setDoctorRequests] = useState([]);
-  const [pendingHospitalRequests, setPendingHospitalRequests] = useState([]);
-  const [tab, setTab] = useState("active");
-  const [search, setSearch] = useState("");
-const navigate = useNavigate(); // Initialize the hook
+  const [pendingCount, setPendingCount] = useState(0);
+  const [archivedCount, setArchivedCount] = useState(0);
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const [statsRes, hospitalsRes, archivedRes, requestsRes, hospitalRequestsRes] =
-        await Promise.all([
-          API.get("/superadmin/stats"),
-          API.get("/superadmin/hospitals"),
-          API.get("/superadmin/archived-hospitals"),
-          API.get("/doctor-requests/all"),
-          API.get("/hospital-requests"),
-        ]);
-
+      const [statsRes, hospitalsRes, archivedRes, requestsRes] = await Promise.all([
+        API.get("/superadmin/stats"),
+        API.get("/superadmin/hospitals"),
+        API.get("/superadmin/archived-hospitals"),
+        API.get("/hospital-requests"),
+      ]);
       setStats(statsRes.data);
       setHospitals(hospitalsRes.data);
-      setArchivedHospitals(archivedRes.data);
-      setDoctorRequests(requestsRes.data);
-      setPendingHospitalRequests(hospitalRequestsRes.data || []);
+      setArchivedCount(archivedRes.data.length);
+      setPendingCount((requestsRes.data || []).length);
     } catch (error) {
       console.error("Error fetching dashboard data", error);
     }
   };
 
-  const handleArchiveHospital = async (id) => {
-    if (!window.confirm("Archive this hospital?")) return;
-    const result =
-  await API.delete(
-  `/superadmin/hospital/${id}`
-);
-    fetchData();
-  };
+  const statCards = [
+    {
+      title: "Hospitals",
+      value: stats.hospitals,
+      icon: <FaHospital className="text-teal-600 text-sm" />,
+      bgColor: "bg-teal-50 border-teal-100",
+    },
+    {
+      title: "Active Doctors",
+      value: stats.doctors,
+      icon: <FaUserMd className="text-blue-600 text-sm" />,
+      bgColor: "bg-blue-50 border-blue-100",
+    },
+    {
+      title: "Total Patients",
+      value: stats.patients,
+      icon: <FaUsers className="text-slate-600 text-sm" />,
+      bgColor: "bg-slate-50 border-slate-100",
+    },
+    {
+      title: "Prescriptions",
+      value: stats.prescriptions,
+      icon: <FaFilePrescription className="text-zinc-650 text-sm" />,
+      bgColor: "bg-zinc-150 border-zinc-200/70",
+    },
+  ];
 
-  const handleRestoreHospital = async (id) => {
-    if (!window.confirm("Restore this hospital?")) return;
-    await API.put(`/superadmin/restore-hospital/${id}`);
-    fetchData();
-  };
-
-  const handleApproveHospitalRequest = async (request) => {
-    try {
-      const response = await API.put(`/hospital-requests/${request._id}/approve`);
-      if (response.data.success) {
-        const { hospitalCode, adminEmail, adminName, hospitalName } = response.data.data;
-        
-        // Dispatch EmailJS
-        await sendHospitalApprovalEmail(adminEmail, adminName, hospitalName, hospitalCode);
-        
-        toast.success(`Request approved! Code ${hospitalCode} sent to ${adminEmail}`);
-        fetchData();
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to approve request.");
-      console.error(error);
-    }
-  };
-
-  const handleRejectHospitalRequest = async (id) => {
-    if (!window.confirm("Reject this hospital request?")) return;
-    try {
-      const response = await API.put(`/hospital-requests/${id}/reject`);
-      if (response.data.success) {
-        toast.success("Hospital request rejected successfully.");
-        fetchData();
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to reject request.");
-      console.error(error);
-    }
-  };
-
-  const filteredHospitals = (
-    tab === "active" ? hospitals : archivedHospitals
-  ).filter((h) => h.name.toLowerCase().includes(search.toLowerCase()));
-
-  const filteredRequests = pendingHospitalRequests.filter((req) =>
-    req.name.toLowerCase().includes(search.toLowerCase()) ||
-    req.adminName.toLowerCase().includes(search.toLowerCase()) ||
-    req.adminEmail.toLowerCase().includes(search.toLowerCase())
-  );
+  const quickActions = [
+    {
+      title: "Hospitals",
+      desc: `${hospitals.length} active · ${archivedCount} archived`,
+      icon: <HiOfficeBuilding className="text-lg text-teal-600" />,
+      accentColor: "border-slate-200 hover:border-teal-500",
+      route: "/super-admin/hospitals",
+    },
+    {
+      title: "Pending Requests",
+      desc: pendingCount > 0 ? `${pendingCount} pending review` : "All requests actioned",
+      icon: <HiDocumentText className="text-lg text-amber-600" />,
+      accentColor: "border-slate-200 hover:border-amber-500",
+      route: "/super-admin/hospital-requests",
+      badge: pendingCount,
+    },
+    {
+      title: "New Hospital",
+      desc: "Add a healthcare facility",
+      icon: <HiPlusCircle className="text-lg text-emerald-600" />,
+      accentColor: "border-slate-200 hover:border-emerald-500",
+      route: "/create-hospital",
+    },
+    {
+      title: "Doctor Log",
+      desc: "Global practitioner log",
+      icon: <HiUserGroup className="text-lg text-blue-600" />,
+      accentColor: "border-slate-200 hover:border-blue-500",
+      route: "/doctor-requests",
+    },
+  ];
 
   return (
     <DashboardLayout>
-      {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Super Admin Dashboard <span className="ml-2">👑</span>
+      <ToastContainer position="top-right" theme="colored" />
+
+      {/* ── HERO HEADER ────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white border border-slate-200 rounded-2xl mb-8 p-6 md:p-8 relative overflow-hidden shadow-sm"
+      >
+        <div className="relative z-10">
+          <div className="flex items-center gap-1.5 mb-2 text-slate-400">
+            <HiViewGrid className="text-slate-400 text-xs" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Administration
+            </span>
+          </div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+            Dashboard
           </h1>
-          <p className="text-gray-500 mt-1">
-            System-wide overview and hospital management.
+          <p className="text-slate-500 text-xs mt-1 font-medium max-w-lg">
+            Monitor system-wide metrics and manage the healthcare network database.
           </p>
         </div>
+      </motion.div>
 
-        <div className="relative group">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-          <input
-            type="text"
-            placeholder="Search hospitals..."
-            className="pl-11 pr-4 py-3 w-full lg:w-80 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {/* ── STAT CARDS ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {statCards.map(({ title, value, icon, bgColor }, i) => (
+          <motion.div
+            key={title}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between"
+          >
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {title}
+              </p>
+              <p className="text-2xl font-black text-slate-850 mt-1">{value ?? 0}</p>
+            </div>
+            <div className={`p-2.5 rounded-xl border ${bgColor}`}>
+              {icon}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── QUICK ACTIONS ──────────────────────────────────────── */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Actions</h2>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {quickActions.map(({ title, desc, icon, accentColor, route, badge }, i) => (
+            <button
+              key={title}
+              onClick={() => navigate(route)}
+              className={`relative bg-white rounded-xl p-5 border text-left transition-all duration-150 shadow-sm hover:shadow-md group overflow-hidden ${accentColor}`}
+            >
+              {badge > 0 && (
+                <span className="absolute top-3 right-3 w-4 h-4 bg-teal-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {badge}
+                </span>
+              )}
+              <div className="mb-4">
+                {icon}
+              </div>
+              <p className="font-bold text-slate-800 text-sm leading-tight">{title}</p>
+              <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{desc}</p>
+              <FaArrowRight className="absolute bottom-5 right-5 text-slate-350 text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" />
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <StatCard
-          title="Total Hospitals"
-          value={stats.hospitals}
-          icon={<FaHospital />}
-          color="from-blue-600 to-indigo-700"
-          delay={0}
-        />
-        <StatCard
-          title="Active Doctors"
-          value={stats.doctors}
-          icon={<FaUserMd />}
-          color="from-emerald-500 to-teal-700"
-          delay={0.1}
-        />
-        <StatCard
-          title="Total Patients"
-          value={stats.patients}
-          icon={<FaUsers />}
-          color="from-violet-500 to-purple-700"
-          delay={0.2}
-        />
-        <StatCard
-          title="Prescriptions"
-          value={stats.prescriptions}
-          icon={<FaFilePrescription />}
-          color="from-orange-500 to-red-600"
-          delay={0.3}
-        />
-      </div>
-
-      <ToastContainer position="top-right" theme="colored" />
-      {/* TABS CONTAINER */}
-      <div className="bg-white p-1.5 inline-flex gap-2 rounded-2xl border border-gray-100 shadow-sm mb-6">
-        <Tab active={tab === "active"} onClick={() => setTab("active")}>
-          Active Hospitals
-        </Tab>
-        <Tab active={tab === "archived"} onClick={() => setTab("archived")}>
-          Archived List
-        </Tab>
-        <Tab active={tab === "requests"} onClick={() => setTab("requests")}>
-          Hospital Requests ({pendingHospitalRequests.length})
-        </Tab>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* HOSPITAL TABLE */}
-        <div className="xl:col-span-2">
-          <Section
-            title={
-              tab === "active"
-                ? "Managed Hospitals"
-                : tab === "archived"
-                ? "Archived Facilities"
-                : "Hospital Registration Requests"
-            }
+      {/* ── RECENT HOSPITALS ───────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Hospitals</h2>
+            <div className="h-px w-16 bg-slate-100" />
+          </div>
+          <button
+            onClick={() => navigate("/super-admin/hospitals")}
+            className="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 transition-colors group"
           >
-            <Table>
-              <thead>
-                <tr className="bg-gray-50/50">
-                  {tab === "requests" ? (
-                    <>
-                      <Th>Hospital Details</Th>
-                      <Th>Admin Info</Th>
-                      <Th>Contact Details</Th>
-                      <Th className="text-right">Action</Th>
-                    </>
-                  ) : (
-                    <>
-                      <Th>Hospital Name</Th>
-                      <Th>Contact/Address</Th>
-                      <Th>Access Code</Th>
-                      <Th className="text-right">Action</Th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence mode="wait">
-                  {tab === "requests" ? (
-                    filteredRequests.length === 0 ? (
-                      <Empty message="No pending requests found" />
-                    ) : (
-                      filteredRequests.map((req) => (
-                        <motion.tr
-                          layout
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          key={req._id}
-                          className="group hover:bg-blue-50/35 transition-colors border-b border-gray-50 last:border-0"
-                        >
-                          <Td>
-                            <div className="font-bold text-gray-850">{req.name}</div>
-                            <div className="text-xs text-gray-400 truncate max-w-[180px]">{req.address}</div>
-                          </Td>
-                          <Td>
-                            <div className="font-semibold text-gray-700">{req.adminName}</div>
-                            <div className="text-xs text-gray-400">{req.adminEmail}</div>
-                          </Td>
-                          <Td>
-                            <div className="text-xs text-gray-550 font-semibold">{req.phone}</div>
-                            <div className="text-xs text-gray-400">{req.email}</div>
-                          </Td>
-                          <Td className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleApproveHospitalRequest(req)}
-                                className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-100 transition-all"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleRejectHospitalRequest(req._id)}
-                                className="px-3.5 py-1.5 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-100 transition-all"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </Td>
-                        </motion.tr>
-                      ))
-                    )
-                  ) : filteredHospitals.length === 0 ? (
-                    <Empty message="No matching hospitals found" />
-                  ) : (
-                    filteredHospitals.map((h) => (
-                      <motion.tr
-                        layout
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        key={h._id}
-                        className="group hover:bg-blue-50/30 transition-colors border-b border-gray-50 last:border-0"
-                      >
-                        <Td>
-                          <div className="font-bold text-gray-800">
-                            {h.name}
+            View All
+            <FaArrowRight className="text-[9px] group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {hospitals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+              <FaHospital size={48} className="mb-3 opacity-20" />
+              <p className="font-bold text-slate-400">No hospitals registered yet</p>
+              <button
+                onClick={() => navigate("/create-hospital")}
+                className="mt-4 px-5 py-2 bg-teal-600 text-white text-xs font-bold rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                Onboard First Hospital
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50">
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Hospital
+                    </th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:table-cell">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">
+                      Phone
+                    </th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Access Code
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {hospitals.slice(0, 5).map((h, i) => (
+                    <motion.tr
+                      key={h._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 + i * 0.04 }}
+                      className="hover:bg-slate-50/40 transition-colors group"
+                    >
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                            <HiOfficeBuilding className="text-slate-400 text-sm" />
                           </div>
-                        </Td>
-                        <Td>
-                          <div className="text-xs text-gray-500 uppercase font-semibold">
-                            {h.phone}
-                          </div>
-                          <div className="text-sm text-gray-400 truncate max-w-[180px]">
-                            {h.address}
-                          </div>
-                        </Td>
-                        <Td>
-                          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-mono font-bold text-sm border border-blue-100">
+                          <p className="font-bold text-slate-700 text-xs">{h.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5 hidden md:table-cell">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 max-w-[200px]">
+                          <FaMapMarkerAlt className="flex-shrink-0" />
+                          <span className="truncate">{h.address}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5 hidden sm:table-cell">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <FaPhone className="flex-shrink-0" />
+                          <span>{h.phone}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-teal-700 text-xs bg-teal-50 px-2 py-0.5 rounded border border-teal-100/60">
                             {h.hospitalCode}
                           </span>
-                        </Td>
-                        <Td className="text-right">
-                          {tab === "active" ? (
-                            <button
-                              onClick={() => handleArchiveHospital(h._id)}
-                              className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                              title="Archive"
-                            >
-                              <FaTrash />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleRestoreHospital(h._id)}
-                              className="p-2.5 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-colors"
-                              title="Restore"
-                            >
-                              <FaUndo />
-                            </button>
-                          )}
-                        </Td>
-                      </motion.tr>
-                    ))
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </Table>
-          </Section>
-        </div>
-
-        {/* DOCTOR REQUESTS SIDEBAR */}
-        <div className="xl:col-span-1">
-          <Section title="Pending Approvals">
-            <div className="space-y-4">
-              {doctorRequests.length === 0 ? (
-                <p className="text-center py-6 text-gray-400 text-sm italic">
-                  No pending requests
-                </p>
-              ) : (
-                doctorRequests.map((d) => (
-                  <div
-                    key={d._id}
-                    className="p-4 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-gray-800">{d.name}</h4>
-                      <span
-                        className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${
-                          d.status === "pending"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {d.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-1">
-                      {d.specialization}
-                    </p>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-400 italic">{d.email}</span>
-                      <button
-                        onClick={() => navigate("/doctor-requests")} // Navigate to the full list
-                        className="text-blue-600 font-bold flex items-center gap-1 hover:underline group/btn"
-                      >
-                        Review
-                        <FaArrowRight className="text-[10px] group-hover/btn:translate-x-1 transition-transform" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </Section>
+          )}
         </div>
       </div>
     </DashboardLayout>
   );
 };
-
-/* UI SUB-COMPONENTS */
-
-const StatCard = ({ title, value, icon, color, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
-    whileHover={{ y: -5 }}
-    className={`relative overflow-hidden bg-gradient-to-br ${color} p-6 rounded-3xl shadow-xl shadow-blue-900/10 text-white`}
-  >
-    <div className="relative z-10">
-      <div className="text-3xl bg-white/20 w-fit p-3 rounded-2xl backdrop-blur-md mb-4">
-        {icon}
-      </div>
-      <h2 className="text-white/80 text-sm font-medium uppercase tracking-wider">
-        {title}
-      </h2>
-      <p className="text-4xl font-black mt-1">{value || 0}</p>
-    </div>
-    {/* Decorative Shapes */}
-    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
-  </motion.div>
-);
-
-const Section = ({ title, children }) => (
-  <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden h-full">
-    <div className="px-6 py-5 border-b border-gray-50 flex justify-between items-center bg-white/50">
-      <h2 className="text-lg font-bold text-gray-800 tracking-tight">
-        {title}
-      </h2>
-    </div>
-    <div className="p-4">{children}</div>
-  </div>
-);
-
-const Table = ({ children }) => (
-  <div className="overflow-x-auto">
-    <table className="w-full text-left border-collapse">{children}</table>
-  </div>
-);
-
-const Th = ({ children, className }) => (
-  <th
-    className={`px-4 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest ${className}`}
-  >
-    {children}
-  </th>
-);
-
-const Td = ({ children, className }) => (
-  <td className={`px-4 py-5 text-sm ${className}`}>{children}</td>
-);
-
-const Tab = ({ active, children, ...props }) => (
-  <button
-    {...props}
-    className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${
-      active
-        ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-        : "text-gray-500 hover:bg-gray-50"
-    }`}
-  >
-    {children}
-  </button>
-);
-
-const Empty = ({ message }) => (
-  <tr>
-    <td colSpan="5" className="text-center py-20">
-      <div className="flex flex-col items-center opacity-30">
-        <FaHospital className="text-5xl mb-3" />
-        <p className="font-medium text-lg">{message}</p>
-      </div>
-    </td>
-  </tr>
-);
 
 export default SuperAdminDashboard;

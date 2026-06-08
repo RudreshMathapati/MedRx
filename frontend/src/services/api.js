@@ -39,11 +39,14 @@ API.interceptors.request.use(
       req.headers["x-session-id"] =
         telemetry.session_id;
 
-      req.data = {
-        ...(req.data || {}),
-        sentinelTelemetry:
-          telemetry,
-      };
+      if (req.data instanceof FormData) {
+        req.data.append("sentinelTelemetry", JSON.stringify(telemetry));
+      } else {
+        req.data = {
+          ...(req.data || {}),
+          sentinelTelemetry: telemetry,
+        };
+      }
 
       console.log(
         `[SENTINEL ${method.toUpperCase()}]`

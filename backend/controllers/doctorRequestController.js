@@ -30,6 +30,11 @@ export const registerDoctorRequest = async (req, res) => {
   try {
     const { hospitalCode } = req.body;
 
+    // Guard: hospitalCode must be present
+    if (!hospitalCode || !hospitalCode.trim()) {
+      return res.status(400).json({ message: "Hospital code is required. Please ask your administrator for the code." });
+    }
+
     // Search for hospital (Case insensitive and Trimmed)
     const hospital = await Hospital.findOne({ 
       hospitalCode: hospitalCode.trim().toUpperCase() 
@@ -39,8 +44,13 @@ export const registerDoctorRequest = async (req, res) => {
       return res.status(400).json({ message: "Invalid Hospital Code. Please check with your admin." });
     }
 
+    if (hospital.status !== "active") {
+      return res.status(400).json({ message: "This hospital is currently inactive. Please contact your administrator." });
+    }
+
     const newRequest = new DoctorRequest({
       ...req.body,
+      signatureFile: req.file ? req.file.path : "",
       hospitalId: hospital._id // Links the doctor to the hospital
     });
 

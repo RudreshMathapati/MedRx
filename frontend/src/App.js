@@ -8,6 +8,8 @@ import HospitalRegister from "./pages/auth/HospitalRegister";
 import SuperAdminDashboard from "./pages/superAdmin/Dashboard";
 import CreateHospital from "./pages/superAdmin/CreateHospital";
 import DoctorRequests from "./pages/superAdmin/DoctorRequests";
+import HospitalManager from "./pages/superAdmin/HospitalManager";
+import HospitalRequests from "./pages/superAdmin/HospitalRequests";
 
 import HospitalAdminDashboard from "./pages/hospitalAdmin/Dashboard";
 import CreateReceptionist from "./pages/hospitalAdmin/CreateReceptionist";
@@ -71,6 +73,22 @@ function App() {
           element={
             <ProtectedRoute role="super_admin">
               <DoctorRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/super-admin/hospitals"
+          element={
+            <ProtectedRoute role="super_admin">
+              <HospitalManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/super-admin/hospital-requests"
+          element={
+            <ProtectedRoute role="super_admin">
+              <HospitalRequests />
             </ProtectedRoute>
           }
         />

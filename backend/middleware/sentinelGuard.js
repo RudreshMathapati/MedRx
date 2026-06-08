@@ -1,8 +1,14 @@
 const sentinelGuard = (actionType) => {
   return async (req, res, next) => {
     try {
-      const telemetry =
-        req.body?.sentinelTelemetry || {};
+      let telemetry = req.body?.sentinelTelemetry || {};
+      if (typeof telemetry === "string") {
+        try {
+          telemetry = JSON.parse(telemetry);
+        } catch (e) {
+          console.error("Failed to parse sentinelTelemetry string in sentinelGuard:", e);
+        }
+      }
 
       const userId =
         req.user?.id ||
