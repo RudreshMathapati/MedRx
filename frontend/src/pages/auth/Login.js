@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import Navbar from "../../components/Navbar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,8 +35,8 @@ console.log(
   telemetry
 );
 
-const res = await axios.post(
-  `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/login`,
+const res = await API.post(
+  "/auth/login",
   {
     email,
     password,

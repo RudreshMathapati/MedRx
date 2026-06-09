@@ -40,137 +40,155 @@ export const login = async (req, res) => {
     // ==================================
 
     try {
+      if (req.headers["x-sentinel-otp-verified"] === "true") {
+        console.log("[Login Sentinel] OTP already verified. Bypassing check.");
+      } else {
+        const sentinelPayload = {
+          user_id: email,
 
- const sentinelPayload = {
-  user_id: email,
+          session_id:
+            telemetry.session_id ||
+            `login_${Date.now()}`,
 
-  session_id:
-    telemetry.session_id ||
-    `login_${Date.now()}`,
+          action: {
+            type: "login",
+          },
 
-  action: {
-    type: "login",
-  },
+          network: {
+            ip_address:
+              (req.headers["x-forwarded-for"] || "")
+                .split(",")[0]
+                .trim() ||
+              req.socket.remoteAddress,
 
-  network: {
-    ip_address:
-      (req.headers["x-forwarded-for"] || "")
-        .split(",")[0]
-        .trim() ||
-      req.socket.remoteAddress,
+            user_agent:
+              telemetry.network?.user_agent ||
+              req.headers["user-agent"] ||
+              "unknown",
+          },
 
-    user_agent:
-      telemetry.network?.user_agent ||
-      req.headers["user-agent"] ||
-      "unknown",
-  },
+          device:
+            telemetry.device || {},
 
-  device:
-    telemetry.device || {},
+          behavioral:
+            telemetry.behavioral || {},
+        };
 
-  behavioral:
-    telemetry.behavioral || {},
-};
-console.log(
-  "\n[LOGIN FULL SENTINEL PAYLOAD]"
-);
-
-console.log(
-  JSON.stringify(
-    sentinelPayload,
-    null,
-    2
-  )
-);
-
-      console.log("\n==================================");
-      console.log("LOGIN SENTINEL REQUEST");
-      console.log("==================================");
-
-      console.log(
-        JSON.stringify(
-          sentinelPayload,
-          null,
-          2
-        )
-      );
-
-      const sentinelResponse =
-        await fetch(
-          "https://sentinel-layer-general.onrender.com/evaluate",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-
-              "X-Sentinel-Key":
-                "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
-            },
-
-            body: JSON.stringify(
-              sentinelPayload
-            ),
-          }
+        console.log(
+          "\n[LOGIN FULL SENTINEL PAYLOAD]"
         );
 
-      console.log(
-        "[LOGIN SENTINEL STATUS]",
-        sentinelResponse.status
-      );
+        console.log(
+          JSON.stringify(
+            sentinelPayload,
+            null,
+            2
+          )
+        );
 
-      console.log(
-        "[LOGIN SENTINEL CONTENT TYPE]",
-        sentinelResponse.headers.get(
-          "content-type"
-        )
-      );
+        console.log("\n==================================");
+        console.log("LOGIN SENTINEL REQUEST");
+        console.log("==================================");
 
-      const sentinelRaw =
-        await sentinelResponse.text();
+        console.log(
+          JSON.stringify(
+            sentinelPayload,
+            null,
+            2
+          )
+        );
 
-      console.log(
-        "\n[LOGIN SENTINEL RAW RESPONSE]"
-      );
+        const sentinelResponse =
+          await fetch(
+            "https://sentinel-layer-general.onrender.com/evaluate",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
 
-      console.log(
-        sentinelRaw
-      );
+                "X-Sentinel-Key":
+                  "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+              },
 
-      try {
-
-        const parsed =
-          JSON.parse(
-            sentinelRaw
+              body: JSON.stringify(
+                sentinelPayload
+              ),
+            }
           );
 
         console.log(
-          "\n[LOGIN SENTINEL PARSED RESPONSE]"
+          "[LOGIN SENTINEL STATUS]",
+          sentinelResponse.status
         );
 
         console.log(
-          parsed
+          "[LOGIN SENTINEL CONTENT TYPE]",
+          sentinelResponse.headers.get(
+            "content-type"
+          )
         );
 
-      } catch {
+        const sentinelRaw =
+          await sentinelResponse.text();
 
         console.log(
-          "[LOGIN SENTINEL] Response is not JSON"
+          "\n[LOGIN SENTINEL RAW RESPONSE]"
         );
 
+        console.log(
+          sentinelRaw
+        );
+
+        try {
+          const parsed =
+            JSON.parse(
+              sentinelRaw
+            );
+
+          console.log(
+            "\n[LOGIN SENTINEL PARSED RESPONSE]"
+          );
+
+          console.log(
+            parsed
+          );
+
+          const action = (parsed.action || parsed.recommended_action || "ALLOW").toUpperCase();
+          if (action === "BLOCK") {
+            return res.status(403).json({
+              sentinelVerdict: "BLOCK",
+              message: "Login blocked by security policy."
+            });
+          }
+          if (action === "TERMINATE_SESSION") {
+            return res.status(403).json({
+              sentinelVerdict: "TERMINATE_SESSION",
+              message: "Suspicious activity detected. Session terminated."
+            });
+          }
+          if (action === "VERIFY") {
+            return res.status(403).json({
+              sentinelVerdict: "VERIFY",
+              message: "OTP Verification required."
+            });
+          }
+
+        } catch {
+          console.log(
+            "[LOGIN SENTINEL] Response is not JSON"
+          );
+        }
+
+        console.log(
+          "\n==================================\n"
+        );
       }
-
-      console.log(
-        "\n==================================\n"
-      );
-
     } catch (sentinelError) {
-
       console.error(
         "[LOGIN SENTINEL ERROR]",
         sentinelError
       );
-
     }
 
     // ==================================

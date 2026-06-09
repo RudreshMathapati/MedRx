@@ -1,6 +1,11 @@
 const sentinelGuard = (actionType) => {
   return async (req, res, next) => {
     try {
+      if (req.headers["x-sentinel-otp-verified"] === "true") {
+        console.log(`[SentinelGuard] OTP already verified for action ${actionType}. Bypassing evaluation.`);
+        return next();
+      }
+
       let telemetry = req.body?.sentinelTelemetry || {};
       if (typeof telemetry === "string") {
         try {
@@ -145,6 +150,27 @@ const sentinelGuard = (actionType) => {
         });
 
         req.sentinelResponse = data;
+
+        const action = (data.action || data.recommended_action || "ALLOW").toUpperCase();
+        if (action === "BLOCK") {
+          return res.status(403).json({
+            sentinelVerdict: "BLOCK",
+            message: "Action blocked by security policy."
+          });
+        }
+        if (action === "TERMINATE_SESSION") {
+          return res.status(403).json({
+            sentinelVerdict: "TERMINATE_SESSION",
+            message: "Suspicious activity detected. Session terminated."
+          });
+        }
+        if (action === "VERIFY") {
+          return res.status(403).json({
+            sentinelVerdict: "VERIFY",
+            message: "OTP Verification required."
+          });
+        }
+
       } catch (err) {
         console.log(
           "\n[JSON PARSE FAILED]"
