@@ -66,7 +66,7 @@ export const blockUser = async (req, res) => {
     user.isBlocked = true;
     await user.save();
 
-    res.json({ message: "User blocked successfully" });
+    res.json({ message: "User blocked successfully now" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
