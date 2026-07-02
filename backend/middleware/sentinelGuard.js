@@ -69,14 +69,14 @@ const sentinelGuard = (actionType) => {
 
       console.log("[REQUEST URL]");
       console.log(
-        "https://sentinel-layer-general.onrender.com/evaluate"
+        process.env.SENTINEL_API_URL || "https://sentinel-layer-general.onrender.com/evaluate"
       );
 
       console.log("[REQUEST HEADERS]");
       console.log({
         "Content-Type": "application/json",
         "X-Sentinel-Key":
-          "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+          process.env.SENTINEL_API_KEY
       });
 
       console.log("[REQUEST PAYLOAD]");
@@ -85,13 +85,13 @@ const sentinelGuard = (actionType) => {
       );
 
       const response = await fetch(
-        "https://sentinel-layer-general.onrender.com/evaluate",
+        process.env.SENTINEL_API_URL || "https://sentinel-layer-general.onrender.com/evaluate",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Sentinel-Key":
-              "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+              process.env.SENTINEL_API_KEY || "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
           },
           body: JSON.stringify(payload),
         }
@@ -152,6 +152,13 @@ const sentinelGuard = (actionType) => {
         req.sentinelResponse = data;
 
         const action = (data.action || data.recommended_action || "ALLOW").toUpperCase();
+        
+        const isShadowMode = process.env.SENTINEL_SHADOW_MODE === "true";
+        if (isShadowMode && action !== "ALLOW") {
+          console.log(`[SentinelGuard] SHADOW MODE ACTIVE: Action verdict is ${action}, but bypassing enforcement and allowing request.`);
+          return next();
+        }
+
         if (action === "BLOCK") {
           return res.status(403).json({
             sentinelVerdict: "BLOCK",

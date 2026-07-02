@@ -34,6 +34,7 @@ export const login = async (req, res) => {
   try {
 
     const { email, password } = req.body;
+    console.log("LOGIN REQUEST HEADERS RECEIVED:", JSON.stringify(req.headers, null, 2));
 
     // ==================================
     // LOGIN SENTINEL EVALUATION
@@ -100,7 +101,7 @@ export const login = async (req, res) => {
 
         const sentinelResponse =
           await fetch(
-            "https://sentinel-layer-general.onrender.com/evaluate",
+            process.env.SENTINEL_API_URL || "https://sentinel-layer-general.onrender.com/evaluate",
             {
               method: "POST",
               headers: {
@@ -108,7 +109,7 @@ export const login = async (req, res) => {
                   "application/json",
 
                 "X-Sentinel-Key":
-                  "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+                  process.env.SENTINEL_API_KEY || "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
               },
 
               body: JSON.stringify(
