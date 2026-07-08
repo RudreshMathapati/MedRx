@@ -1,226 +1,21 @@
-// import React, { useState } from "react";
-// import API from "../../services/api";
-// import { ToastContainer, toast } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-// import Navbar from "../../components/Navbar";
-// import { motion } from "framer-motion";
-// import { 
-//   HiOutlineUser, 
-//   HiOutlineMail, 
-//   HiOutlinePhone, 
-//   HiOutlineAcademicCap, 
-//   HiOutlineBadgeCheck, 
-//   HiOutlineBriefcase, 
-//   HiOutlineOfficeBuilding,
-//   HiOutlineCloudUpload
-// } from "react-icons/hi";
-
-// const DoctorRegister = () => {
-//   const [form, setForm] = useState({
-//     name: "",
-//     email: "",
-//     phone: "",
-//     qualification: "",
-//     specialization: "",
-//     experience: "",
-//     hospitalCode: "",
-//     confirm: false,
-//   });
-
-//   const [signature, setSignature] = useState(null);
-//   const [loading, setLoading] = useState(false);
-
-//   const handleChange = (e) => {
-//     const { name, value, type, checked } = e.target;
-//     setForm({
-//       ...form,
-//       [name]: type === "checkbox" ? checked : value,
-//     });
-//   };
-
-//   const handleFileChange = (e) => {
-//     setSignature(e.target.files[0]);
-//   };
-
-//   const handleSubmit = async () => {
-//     if (!form.confirm) {
-//       toast.error("Please confirm the information accuracy");
-//       return;
-//     }
-
-//     if (!signature) {
-//       toast.error("Please upload your digital signature");
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-//       const formData = new FormData();
-//       Object.keys(form).forEach(key => formData.append(key, form[key]));
-//       formData.append("signature", signature);
-
-//       await API.post("/doctor-requests/register", formData, {
-//         headers: { "Content-Type": "multipart/form-data" },
-//       });
-
-//       toast.success("Registration submitted! Awaiting administrator approval.");
-//     } catch (err) {
-//       toast.error(err.response?.data?.message || "Submission failed");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-slate-50 pt-20 md:pt-24">
-//       <ToastContainer position="top-right" theme="colored" />
-//       <Navbar />
-
-//       <div className="max-w-7xl mx-auto px-4 py-12 lg:px-8">
-//         <motion.div 
-//           initial={{ opacity: 0, y: 20 }}
-//           animate={{ opacity: 1, y: 0 }}
-//           className="bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col lg:flex-row min-h-[700px]"
-//         >
-
-//           {/* Left Side: Form */}
-//           <div className="w-full lg:w-3/5 p-8 md:p-12 lg:p-16">
-//             <header className="mb-10">
-//               <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-//                 Join our Medical Network
-//               </h2>
-//               <p className="text-slate-500 mt-3 text-lg">
-//                 Complete your professional profile to request hospital access.
-//               </p>
-//             </header>
-
-//             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//               <InputGroup label="Full Name" name="name" icon={<HiOutlineUser />} onChange={handleChange} placeholder="Dr. Jane Doe" />
-//               <InputGroup label="Email Address" name="email" type="email" icon={<HiOutlineMail />} onChange={handleChange} placeholder="jane@clinic.com" />
-//               <InputGroup label="Phone Number" name="phone" icon={<HiOutlinePhone />} onChange={handleChange} placeholder="+1 (555) 000-0000" />
-//               <InputGroup label="Highest Qualification" name="qualification" icon={<HiOutlineAcademicCap />} onChange={handleChange} placeholder="MD, MBBS" />
-//               <InputGroup label="Specialization" name="specialization" icon={<HiOutlineBadgeCheck />} onChange={handleChange} placeholder="Cardiology" />
-//               <InputGroup label="Experience (Years)" name="experience" icon={<HiOutlineBriefcase />} onChange={handleChange} placeholder="8" />
-
-//               <div className="md:col-span-2">
-//                 <InputGroup label="Hospital Access Code" name="hospitalCode" icon={<HiOutlineOfficeBuilding />} onChange={handleChange} placeholder="HOSP-2026-XXXX" />
-//               </div>
-
-//               {/* Signature Upload */}
-//               <div className="md:col-span-2">
-//                 <label className="block text-sm font-bold text-slate-700 mb-2">Digital Signature (PNG/JPG)</label>
-//                 <div className="relative border-2 border-dashed border-slate-200 rounded-2xl p-6 transition-all hover:border-emerald-400 bg-slate-50/50 group">
-//                   <input
-//                     type="file"
-//                     accept="image/*"
-//                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-//                     onChange={handleFileChange}
-//                   />
-//                   <div className="text-center">
-//                     <HiOutlineCloudUpload className="mx-auto text-4xl text-slate-400 group-hover:text-emerald-500 transition-colors" />
-//                     <p className="mt-2 text-sm text-slate-600 font-medium">
-//                       {signature ? signature.name : "Click to upload or drag and drop"}
-//                     </p>
-//                     <p className="text-xs text-slate-400 mt-1">Maximum file size 2MB</p>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* Checkbox */}
-//             <div className="flex items-start mt-8 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-//               <input 
-//                 type="checkbox" 
-//                 name="confirm" 
-//                 onChange={handleChange} 
-//                 className="mt-1 h-5 w-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition cursor-pointer" 
-//               />
-//               <label className="ml-3 text-sm text-slate-700 leading-relaxed">
-//                 I solemnly declare that the information provided is accurate to the best of my knowledge and I agree to the <span className="text-emerald-600 underline font-semibold cursor-pointer">Terms of Service</span>.
-//               </label>
-//             </div>
-
-//             <button
-//               onClick={handleSubmit}
-//               disabled={loading}
-//               className={`mt-10 w-full py-4 rounded-2xl text-lg font-bold shadow-xl shadow-emerald-200 transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 ${
-//                 loading ? "bg-slate-400" : "bg-emerald-600 hover:bg-emerald-700 text-white"
-//               }`}
-//             >
-//               {loading ? (
-//                 <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-//               ) : (
-//                 "Submit Registration"
-//               )}
-//             </button>
-//           </div>
-
-//           {/* Right Side: Visual */}
-//           <div className="hidden lg:flex w-2/5 bg-gradient-to-br from-emerald-500 to-teal-700 p-12 items-center justify-center relative overflow-hidden">
-//             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-//             <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-emerald-900/20 rounded-full blur-3xl"></div>
-
-//             <div className="relative z-10 text-center">
-//               <motion.img
-//                 animate={{ y: [0, -15, 0] }}
-//                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-//                 src="https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
-//                 alt="doctor"
-//                 className="rounded-3xl shadow-2xl w-full max-w-sm mx-auto border-8 border-white/10"
-//               />
-//               <div className="mt-12 text-white">
-//                 <h3 className="text-3xl font-bold">Secure Verification</h3>
-//                 <p className="mt-4 text-emerald-50 text-lg opacity-80">
-//                   Join a community of thousands of healthcare professionals providing world-class care.
-//                 </p>
-//               </div>
-//             </div>
-//           </div>
-//         </motion.div>
-
-//         <div className="mt-12 text-center text-slate-400 text-sm">
-//           © 2026 DocConnect. Professional Medical Registration Portal.
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// /* Reusable Input Component */
-// const InputGroup = ({ label, icon, ...props }) => (
-//   <div className="flex flex-col">
-//     <label className="text-sm font-bold text-slate-700 mb-1.5 ml-1">{label}</label>
-//     <div className="relative flex items-center group">
-//       <div className="absolute left-4 text-slate-400 text-xl group-focus-within:text-emerald-500 transition-colors">
-//         {icon}
-//       </div>
-//       <input
-//         {...props}
-//         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
-//       />
-//     </div>
-//   </div>
-// );
-
-// export default DoctorRegister;
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Navbar from "../../components/Navbar";
-import { motion } from "framer-motion";
-import {
-  HiOutlineUser,
-  HiOutlineMail,
-  HiOutlinePhone,
-  HiOutlineAcademicCap,
-  HiOutlineBadgeCheck,
-  HiOutlineBriefcase,
-  HiOutlineOfficeBuilding,
-  HiOutlineCloudUpload,
-  HiOutlineCheck
-} from "react-icons/hi";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { sendOTPEmail } from "../../utils/emailjsConfig";
+import {
+  Crosshair, User, Mail, Phone, GraduationCap, Stethoscope,
+  Briefcase, Building2, Upload, CheckCircle2, ShieldCheck,
+  Cpu, Database, HeartPulse, ArrowUpRight, Terminal,
+  Layers, Pill, Radio, Check, RefreshCw
+} from "lucide-react";
+import { Link } from "react-router-dom";
+
+const fv = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 20 } }
+};
 
 const DoctorRegister = () => {
   const [form, setForm] = useState({
@@ -235,7 +30,7 @@ const DoctorRegister = () => {
   });
 
   const [signature, setSignature] = useState(null);
-  const [signaturePreview, setSignaturePreview] = useState(null); // Added preview state
+  const [signaturePreview, setSignaturePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // OTP Verification States
@@ -245,40 +40,53 @@ const DoctorRegister = () => {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
 
+  // ─── DECOUPLED PARALLAX SEPARATION ENGINE ────────────────────────────
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const physics = { damping: 20, stiffness: 120, mass: 0.3 };
+  
+  const gridX = useSpring(useTransform(mouseX, [-500, 500], [-15, 15]), physics);
+  const gridY = useSpring(useTransform(mouseY, [-500, 500], [-15, 15]), physics);
+  
+  const bgFloatingX = useSpring(useTransform(mouseX, [-500, 500], [-45, 45]), physics);
+  const bgFloatingY = useSpring(useTransform(mouseY, [-500, 500], [-45, 45]), physics);
+
+  const cardRotateX = useSpring(useTransform(mouseY, [-400, 400], [3, -3]), physics);
+  const cardRotateY = useSpring(useTransform(mouseX, [-400, 400], [-3, 3]), physics);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const { clientX, clientY } = e;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      mouseX.set(clientX - width / 2);
+      mouseY.set(clientY - height / 2);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
+
   const handleSendOTP = async () => {
-    if (!form.email) {
-      toast.error("Please enter your email address first.");
-      return;
-    }
-
+    if (!form.email) { toast.error("Please enter your email address first."); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-
+    if (!emailRegex.test(form.email)) { toast.error("Please enter a valid email address."); return; }
     try {
       setOtpLoading(true);
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(otp);
-
       await sendOTPEmail(form.email, otp);
       setIsOtpSent(true);
-      toast.success("OTP verification code sent successfully to your email!");
+      toast.success("OTP verification code sent to your email!");
     } catch (err) {
       toast.error("Failed to send verification email.");
-      console.error(err);
     } finally {
       setOtpLoading(false);
     }
   };
 
   const handleVerifyOTP = () => {
-    if (!enteredOtp) {
-      toast.error("Please enter the OTP code.");
-      return;
-    }
-
+    if (!enteredOtp) { toast.error("Please enter the OTP code."); return; }
     if (enteredOtp === generatedOtp || enteredOtp === "123456") {
       setIsOtpVerified(true);
       toast.success("Email verified successfully!");
@@ -289,81 +97,47 @@ const DoctorRegister = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({
-      ...form,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSignature(file);
-      setSignaturePreview(URL.createObjectURL(file)); // Create local URL for preview
+      setSignaturePreview(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async () => {
-    // 1. Validation
     if (!form.name || !form.email || !form.hospitalCode) {
-      toast.error("Please fill in all required fields");
-      return;
+      toast.error("Please fill in all required fields"); return;
     }
-
     if (!isOtpVerified) {
-      toast.error("Please verify your email address using the OTP first.");
-      return;
+      toast.error("Please verify your email address using the OTP first."); return;
     }
-
     if (!form.confirm) {
-      toast.error("Please confirm the information accuracy");
-      return;
+      toast.error("Please confirm the information accuracy"); return;
     }
-
     if (!signature) {
-      toast.error("Please upload your digital signature");
-      return;
+      toast.error("Please upload your digital signature"); return;
     }
-
     try {
       setLoading(true);
-
-      // 2. Prepare Form Data
       const formData = new FormData();
-
-      // Append form fields, ensuring hospitalCode is cleaned
       Object.keys(form).forEach(key => {
-        if (key === "hospitalCode") {
-          formData.append(key, form[key].trim().toUpperCase());
-        } else {
-          formData.append(key, form[key]);
-        }
+        if (key === "hospitalCode") formData.append(key, form[key].trim().toUpperCase());
+        else formData.append(key, form[key]);
       });
-
-      // Append the file
       formData.append("signature", signature);
-
-      // 3. API Call
       await API.post("/doctor-requests/register", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       toast.success("Registration submitted! Awaiting administrator approval.");
-
-      // Reset form after success
-      setForm({
-        name: "", email: "", phone: "", qualification: "",
-        specialization: "", experience: "", hospitalCode: "", confirm: false
-      });
-      setSignature(null);
-      setSignaturePreview(null);
-      setIsOtpSent(false);
-      setIsOtpVerified(false);
-      setEnteredOtp("");
-      setGeneratedOtp("");
-
+      setForm({ name: "", email: "", phone: "", qualification: "", specialization: "", experience: "", hospitalCode: "", confirm: false });
+      setSignature(null); setSignaturePreview(null);
+      setIsOtpSent(false); setIsOtpVerified(false);
+      setEnteredOtp(""); setGeneratedOtp("");
     } catch (err) {
-      // Catch "Invalid Hospital Code" or other backend errors
       toast.error(err.response?.data?.message || "Submission failed. Please check your hospital code.");
     } finally {
       setLoading(false);
@@ -371,205 +145,296 @@ const DoctorRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20 md:pt-24">
-      <ToastContainer position="top-right" theme="colored" />
-      <Navbar />
+    <div className="min-h-screen bg-[#fafbfc] text-[#0f172a] font-sans antialiased selection:bg-emerald-500/20 overflow-x-hidden">
 
-      <div className="max-w-7xl mx-auto px-4 py-12 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col lg:flex-row min-h-[700px]"
-        >
+      {/* ─── AMBIENT BACKDROP ─── */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        
+        {/* Parallax Background Grid */}
+        <motion.div 
+          style={{ x: gridX, y: gridY }}
+          className="absolute inset-[-10%] bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,#000_50%,transparent_100%)] opacity-40" 
+        />
+        
+        <motion.div animate={{ x: [0, 20, -20, 0], y: [0, -30, 30, 0] }} transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-5%] left-[-5%] w-[800px] h-[800px] bg-gradient-to-tr from-emerald-400/15 via-teal-300/8 to-transparent rounded-full blur-[120px]" />
+        <motion.div animate={{ x: [0, -30, 20, 0], y: [0, 40, -20, 0] }} transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[5%] right-[-5%] w-[900px] h-[900px] bg-gradient-to-br from-blue-400/10 via-indigo-500/8 to-transparent rounded-full blur-[140px]" />
 
-          {/* Left Side: Form */}
-          <div className="w-full lg:w-3/5 p-8 md:p-12 lg:p-16">
-            <header className="mb-10">
-              <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-                Join our Medical Network
-              </h2>
-              <p className="text-slate-500 mt-3 text-lg">
-                Complete your professional profile to request hospital access.
-              </p>
-            </header>
+        {/* Floating icon nodes with Parallax movement */}
+        <motion.div style={{ x: bgFloatingX, y: bgFloatingY }} className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block">
+          {[
+            { Icon: Cpu, top: "12%", right: "8%", delay: 0.8, color: "text-indigo-500" },
+            { Icon: Pill, top: "50%", left: "10%", delay: 2, color: "text-teal-500" },
+            { Icon: Stethoscope, top: "78%", right: "12%", delay: 1.2, color: "text-slate-600" },
+            { Icon: Database, top: "35%", right: "6%", delay: 3, color: "text-sky-500" },
+            { Icon: HeartPulse, top: "55%", right: "18%", delay: 0.5, color: "text-rose-500" },
+            { Icon: Layers, top: "28%", left: "6%", delay: 2.5, color: "text-violet-500" },
+          ].map(({ Icon, top, left, right, delay, color }, i) => (
+            <motion.div key={i}
+              animate={{ y: [0, -12, 0] }}
+              transition={{ duration: 6 + (i % 3), repeat: Infinity, ease: "easeInOut", delay }}
+              className={`absolute bg-white/60 border border-white/80 backdrop-blur-md p-3 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.02)] flex items-center justify-center ${color}`}
+              style={{ top, left, right }}
+            >
+              <Icon size={18} />
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputGroup label="Full Name" name="name" value={form.name} icon={<HiOutlineUser />} onChange={handleChange} placeholder="Dr. Jane Doe" />
+      {/* ─── NAVIGATION ─── */}
+      <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-md border-b border-slate-200/50 px-6 md:px-12 py-4 flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+        <Link to="/" className="flex items-center gap-3 group cursor-pointer">
+          <div className="relative w-9 h-9 flex items-center justify-center bg-slate-950 text-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 group-hover:scale-105">
+            <Crosshair size={16} className="text-emerald-400 z-10" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-600 to-slate-950 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+          <span className="text-xl font-black tracking-tighter text-slate-950 font-mono lowercase">
+            med<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-500 font-sans font-light">rx_</span>
+          </span>
+        </Link>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-slate-600 tracking-wider bg-white border border-slate-200 px-3 py-2 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            REGISTRATION PORTAL
+          </div>
+          <Link to="/login" className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 hover:text-slate-950 transition-colors hidden sm:block">
+            Sign In
+          </Link>
+        </div>
+      </header>
 
-              {/* Email Input & OTP Send */}
-              <div className="flex flex-col">
-                <label className="text-sm font-bold text-slate-700 mb-1.5 ml-1 font-sans">Email Address (To verify)</label>
-                <div className="flex gap-2">
-                  <div className="relative flex items-center group flex-1">
-                    <div className="absolute left-4 text-slate-400 text-xl group-focus-within:text-emerald-500 transition-colors">
-                      <HiOutlineMail />
+      <ToastContainer position="top-right" theme="light"
+        toastClassName="bg-white/80 backdrop-blur-md border border-slate-200/50 shadow-2xl rounded-2xl text-slate-800 font-semibold" />
+
+      {/* ─── MAIN CONTENT ─── */}
+      <main className="relative z-10 max-w-5xl mx-auto px-4 py-10 lg:px-8 flex flex-col items-center">
+
+        {/* Page Header Badge */}
+        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+          className="mb-8 text-center">
+          <motion.div variants={fv} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white shadow-sm w-fit text-[10px] font-mono font-bold tracking-tight text-slate-500 mx-auto mb-4">
+            <Radio size={12} className="text-emerald-500 animate-pulse" /> PRACTITIONER // REGISTRATION PORTAL
+          </motion.div>
+          <motion.h1 variants={fv} className="text-3xl md:text-5xl font-black tracking-tight text-slate-950 leading-tight">
+            Join the Medical<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-500 font-light">Network.</span>
+          </motion.h1>
+          <motion.p variants={fv} className="text-slate-500 text-sm font-medium mt-3 max-w-md mx-auto">
+            Submit your credentials to request hospital access on MedRx.
+          </motion.p>
+        </motion.div>
+
+        {/* ─── FORM CARD ─── */}
+        <div className="w-full perspective-[1200px]">
+          <motion.div
+            style={{ rotateX: cardRotateX, rotateY: cardRotateY }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 80, damping: 22, delay: 0.15 }}
+            className="relative bg-white/60 border border-white/80 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(15,23,42,0.07)] backdrop-blur-xl overflow-hidden"
+          >
+            {/* Top laser line */}
+            <div className="absolute top-0 left-16 right-16 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
+
+            <div className="p-7 md:p-10 lg:p-12">
+
+              {/* Section label */}
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 shadow-sm">
+                  <Stethoscope size={15} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Professional Details</p>
+                  <p className="text-xs font-bold text-slate-700">Complete all fields to proceed</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                {/* Full Name */}
+                <FieldGroup label="Full Name" icon={<User size={15} />}>
+                  <input name="name" value={form.name} onChange={handleChange} placeholder="Dr. Jane Doe"
+                    className={inputCls} />
+                </FieldGroup>
+
+                {/* Email + OTP */}
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelCls}>Email Address <span className="text-emerald-500 text-[9px] font-mono">(verify)</span></label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1 group/inp">
+                      <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/inp:text-slate-950 transition-colors" />
+                      <input type="email" name="email" value={form.email} onChange={handleChange}
+                        disabled={isOtpVerified} placeholder="jane@clinic.com"
+                        className={`${inputCls} pl-11 ${isOtpVerified ? "border-emerald-200 bg-emerald-50/30 text-emerald-800" : ""}`} />
                     </div>
-                    <input
-                      type="email"
-                      name="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      disabled={isOtpVerified}
-                      placeholder="jane@clinic.com"
-                      className={`w-full pl-12 pr-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400 ${isOtpVerified ? "border-emerald-200 bg-emerald-50/20 text-emerald-800" : "border-slate-200"
-                        }`}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSendOTP}
-                    disabled={otpLoading || isOtpVerified || !form.email}
-                    className={`px-4 rounded-2xl font-semibold text-sm transition-all flex items-center gap-1 border shadow-sm ${isOtpVerified
+                    <button type="button" onClick={handleSendOTP}
+                      disabled={otpLoading || isOtpVerified || !form.email}
+                      className={`px-4 rounded-2xl text-xs font-mono font-bold tracking-wider transition-all border shadow-sm flex items-center gap-1 ${isOtpVerified
                         ? "bg-emerald-50 text-emerald-600 border-emerald-200 cursor-not-allowed"
                         : otpLoading
                           ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-200"
-                      }`}
-                  >
-                    {otpLoading ? (
-                      <div className="w-5 h-5 border-2 border-emerald-600/30 border-t-emerald-600 rounded-full animate-spin" />
-                    ) : isOtpVerified ? (
-                      <>Verified</>
-                    ) : isOtpSent ? (
-                      <>Resend OTP</>
-                    ) : (
-                      <>Send OTP</>
-                    )}
-                  </button>
-                </div>
-                {isOtpVerified && (
-                  <p className="text-xs text-emerald-600 font-bold mt-1 ml-1 flex items-center gap-1">
-                    <HiOutlineCheck className="w-3.5 h-3.5" /> Verified
-                  </p>
-                )}
-              </div>
-
-              {/* Enter OTP Field */}
-              {isOtpSent && !isOtpVerified && (
-                <div className="md:col-span-2 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl p-5 mt-2">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Enter 6-Digit OTP Code</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      maxLength="6"
-                      placeholder="123456"
-                      value={enteredOtp}
-                      onChange={(e) => setEnteredOtp(e.target.value)}
-                      className="w-36 text-center tracking-widest text-lg font-bold py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 text-slate-800"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleVerifyOTP}
-                      className="px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-sm transition-all flex items-center shadow-md shadow-emerald-100"
-                    >
-                      Verify OTP
+                          : "bg-slate-950 text-white border-slate-950 hover:bg-slate-800"
+                        }`}>
+                      {otpLoading ? <RefreshCw size={13} className="animate-spin" /> : isOtpVerified ? <Check size={13} /> : "OTP"}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2 font-medium">Please check your inbox or spam folder for the code.</p>
-                </div>
-              )}
-
-              <InputGroup label="Phone Number" name="phone" value={form.phone} icon={<HiOutlinePhone />} onChange={handleChange} placeholder="+1 (555) 000-0000" />
-              <InputGroup label="Highest Qualification" name="qualification" value={form.qualification} icon={<HiOutlineAcademicCap />} onChange={handleChange} placeholder="MD, MBBS" />
-              <InputGroup label="Specialization" name="specialization" value={form.specialization} icon={<HiOutlineBadgeCheck />} onChange={handleChange} placeholder="Cardiology" />
-              <InputGroup label="Experience (Years)" name="experience" value={form.experience} icon={<HiOutlineBriefcase />} onChange={handleChange} placeholder="8" />
-
-              <div className="md:col-span-2">
-                <InputGroup label="Hospital Access Code" name="hospitalCode" value={form.hospitalCode} icon={<HiOutlineOfficeBuilding />} onChange={handleChange} placeholder="HOSP-XXXX" />
-                <p className="text-[10px] text-slate-400 mt-1 ml-1 uppercase font-bold tracking-widest">Ask your Hospital Administrator for this code</p>
-              </div>
-
-              {/* Signature Upload */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-2">Digital Signature (PNG/JPG)</label>
-                <div className="relative border-2 border-dashed border-slate-200 rounded-2xl p-6 transition-all hover:border-emerald-400 bg-slate-50/50 group">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    onChange={handleFileChange}
-                  />
-                  <div className="text-center">
-                    {signaturePreview ? (
-                      <img src={signaturePreview} alt="Preview" className="mx-auto max-h-24 mb-2 mix-blend-multiply" />
-                    ) : (
-                      <HiOutlineCloudUpload className="mx-auto text-4xl text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                    )}
-                    <p className="mt-2 text-sm text-slate-600 font-medium">
-                      {signature ? signature.name : "Click to upload or drag and drop"}
+                  {isOtpVerified && (
+                    <p className="text-[10px] text-emerald-600 font-bold font-mono flex items-center gap-1 mt-0.5">
+                      <CheckCircle2 size={11} /> VERIFIED
                     </p>
+                  )}
+                </div>
+
+                {/* OTP Entry */}
+                <AnimatePresence>
+                  {isOtpSent && !isOtpVerified && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                      className="md:col-span-2">
+                      <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5">
+                        <label className={labelCls}>Enter 6-Digit OTP Code</label>
+                        <div className="flex gap-3 mt-2">
+                          <input type="text" maxLength="6" placeholder="· · · · · ·"
+                            value={enteredOtp} onChange={(e) => setEnteredOtp(e.target.value)}
+                            className="w-36 text-center tracking-[0.5em] text-lg font-black py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:border-slate-950 text-slate-800" />
+                          <button type="button" onClick={handleVerifyOTP}
+                            className="px-6 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs font-mono tracking-wider transition-all shadow-lg">
+                            Verify OTP
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-2 font-mono">Check your inbox or spam folder for the code.</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Phone */}
+                <FieldGroup label="Phone Number" icon={<Phone size={15} />}>
+                  <input name="phone" value={form.phone} onChange={handleChange} placeholder="+1 (555) 000-0000" className={inputCls} />
+                </FieldGroup>
+
+                {/* Qualification */}
+                <FieldGroup label="Highest Qualification" icon={<GraduationCap size={15} />}>
+                  <input name="qualification" value={form.qualification} onChange={handleChange} placeholder="MD, MBBS" className={inputCls} />
+                </FieldGroup>
+
+                {/* Specialization */}
+                <FieldGroup label="Specialization" icon={<Stethoscope size={15} />}>
+                  <input name="specialization" value={form.specialization} onChange={handleChange} placeholder="Cardiology" className={inputCls} />
+                </FieldGroup>
+
+                {/* Experience */}
+                <FieldGroup label="Experience (Years)" icon={<Briefcase size={15} />}>
+                  <input name="experience" value={form.experience} onChange={handleChange} placeholder="8" className={inputCls} />
+                </FieldGroup>
+
+                {/* Hospital Code */}
+                <div className="md:col-span-2">
+                  <FieldGroup label="Hospital Access Code" icon={<Building2 size={15} />}>
+                    <input name="hospitalCode" value={form.hospitalCode} onChange={handleChange} placeholder="HOSP-XXXX"
+                      className={`${inputCls} font-mono tracking-widest uppercase`} />
+                  </FieldGroup>
+                  <p className="text-[9px] text-slate-400 mt-1 ml-1 uppercase font-bold font-mono tracking-widest">
+                    Ask your Hospital Administrator for this code
+                  </p>
+                </div>
+
+                {/* Signature Upload */}
+                <div className="md:col-span-2">
+                  <label className={labelCls}>Digital Signature <span className="text-slate-400 normal-case font-normal">(PNG / JPG)</span></label>
+                  <div className="relative mt-1.5 border-2 border-dashed border-slate-200 hover:border-emerald-400 bg-white/50 hover:bg-white/80 rounded-2xl p-6 transition-all cursor-pointer group/upload">
+                    <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      onChange={handleFileChange} />
+                    <div className="text-center">
+                      {signaturePreview ? (
+                        <img src={signaturePreview} alt="Signature Preview" className="mx-auto max-h-24 mb-2 mix-blend-multiply rounded-xl" />
+                      ) : (
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 group-hover/upload:bg-emerald-50 border border-slate-200 group-hover/upload:border-emerald-200 flex items-center justify-center transition-all">
+                          <Upload size={20} className="text-slate-400 group-hover/upload:text-emerald-500 transition-colors" />
+                        </div>
+                      )}
+                      <p className="text-sm font-bold text-slate-600 group-hover/upload:text-slate-900 transition-colors">
+                        {signature ? signature.name : "Click to upload or drag and drop"}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">Max file size 2MB</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Checkbox */}
-            <div className="flex items-start mt-8 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-              <input
-                type="checkbox"
-                name="confirm"
-                checked={form.confirm}
-                onChange={handleChange}
-                className="mt-1 h-5 w-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition cursor-pointer"
-              />
-              <label className="ml-3 text-sm text-slate-700 leading-relaxed">
-                I solemnly declare that the information provided is accurate and I agree to the <span className="text-emerald-600 underline font-semibold cursor-pointer">Terms of Service</span>.
-              </label>
-            </div>
+              {/* Confirm checkbox */}
+              <div className="mt-7 flex items-start gap-3 p-4 bg-emerald-50/40 rounded-2xl border border-emerald-100">
+                <input type="checkbox" name="confirm" id="confirm" checked={form.confirm} onChange={handleChange}
+                  className="mt-1 h-4 w-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer" />
+                <label htmlFor="confirm" className="text-xs text-slate-600 font-medium leading-relaxed cursor-pointer select-none">
+                  I solemnly declare that the information provided is accurate and I agree to the{" "}
+                  <span className="text-emerald-600 underline font-bold cursor-pointer">Terms of Service</span>.
+                </label>
+              </div>
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className={`mt-10 w-full py-4 rounded-2xl text-lg font-bold shadow-xl shadow-emerald-200 transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 ${loading ? "bg-slate-400" : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                }`}
-            >
-              {loading ? (
-                <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                "Submit Registration"
-              )}
-            </button>
-          </div>
+              {/* Submit */}
+              <motion.button
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleSubmit}
+                disabled={loading}
+                className="mt-7 w-full py-4 bg-slate-950 hover:bg-slate-900 disabled:bg-slate-200 text-white disabled:text-slate-400 text-sm font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-950/10 font-mono tracking-wide"
+              >
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="w-5 h-5 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <motion.div key="label" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                      className="flex items-center gap-2">
+                      Submit Registration Request <ArrowUpRight size={16} className="text-emerald-400" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
 
-          {/* Right Side: Visual */}
-          <div className="hidden lg:flex w-2/5 bg-gradient-to-br from-emerald-500 to-teal-700 p-12 items-center justify-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-emerald-900/20 rounded-full blur-3xl"></div>
-
-            <div className="relative z-10 text-center text-white">
-              <motion.img
-                animate={{ y: [0, -15, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                src="https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
-                alt="doctor"
-                className="rounded-3xl shadow-2xl w-full max-w-sm mx-auto border-8 border-white/10"
-              />
-              <div className="mt-12">
-                <h3 className="text-3xl font-bold">Secure Verification</h3>
-                <p className="mt-4 text-emerald-50 text-lg opacity-80">
-                  Join a community of thousands of healthcare professionals providing world-class care.
-                </p>
+              {/* Footer links */}
+              <div className="mt-8 pt-6 border-t border-slate-100/80 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Link to="/login" className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100/70 hover:border-slate-200 bg-slate-50/40 hover:bg-slate-50 text-xs font-bold text-slate-700 transition-all group/link">
+                  <span>Already have an account?</span>
+                  <span className="text-emerald-500 opacity-0 group-hover/link:opacity-100 transform translate-x-[-4px] group-hover/link:translate-x-0 transition-all duration-300">↗</span>
+                </Link>
+                <Link to="/hospital-register" className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100/70 hover:border-slate-200 bg-slate-50/40 hover:bg-slate-50 text-xs font-bold text-slate-700 transition-all group/link">
+                  <span>Register a Hospital?</span>
+                  <span className="text-slate-900 opacity-0 group-hover/link:opacity-100 transform translate-x-[-4px] group-hover/link:translate-x-0 transition-all duration-300">⚡</span>
+                </Link>
               </div>
             </div>
-          </div>
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 w-full text-center text-slate-400 text-[9px] font-bold font-mono py-6 tracking-wider border-t border-slate-200/40 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-6 lg:px-12 max-w-5xl mx-auto">
+        <div className="flex items-center gap-2">
+          <Terminal size={11} className="text-slate-900" /> © 2026 MEDRX — DOCTOR REGISTRATION PORTAL
+        </div>
+        <div className="hidden sm:flex items-center gap-4">
+          <span>HIPAA COMPLIANT</span><span>•</span><span>SECURE PATIENT DATA</span>
+        </div>
+      </footer>
     </div>
   );
 };
 
-/* Reusable Input Component */
-const InputGroup = ({ label, icon, ...props }) => (
-  <div className="flex flex-col">
-    <label className="text-sm font-bold text-slate-700 mb-1.5 ml-1">{label}</label>
-    <div className="relative flex items-center group">
-      <div className="absolute left-4 text-slate-400 text-xl group-focus-within:text-emerald-500 transition-colors">
+// ─── Shared Styles ───────────────────────────────────────────────────────────
+const labelCls = "text-[10px] font-mono font-bold text-slate-400 tracking-wider uppercase mb-1.5 block";
+const inputCls = "w-full pl-11 pr-4 py-3.5 bg-white/50 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-300 font-semibold outline-none text-sm transition-all focus:border-slate-950 focus:bg-white/90 shadow-inner shadow-slate-100/40";
+
+const FieldGroup = ({ label, icon, children }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className={labelCls}>{label}</label>
+    <div className="relative group/field">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/field:text-slate-950 transition-colors">
         {icon}
       </div>
-      <input
-        {...props}
-        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
-      />
+      {children}
     </div>
   </div>
 );

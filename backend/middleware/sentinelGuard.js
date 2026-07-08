@@ -91,7 +91,7 @@ const sentinelGuard = (actionType) => {
           headers: {
             "Content-Type": "application/json",
             "X-Sentinel-Key":
-              process.env.SENTINEL_API_KEY || "c493d2858ab64449ab5492d37e0f943700a1cf4ceaa744ee84445991c1843e76",
+              process.env.SENTINEL_API_KEY,
           },
           body: JSON.stringify(payload),
         }
